@@ -3,6 +3,8 @@ package com.murariwalake.springbootglobalexceptionhandling.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.murariwalake.springbootglobalexceptionhandling.exception.StudentNotFoundException;
+import com.murariwalake.springbootglobalexceptionhandling.exception.StudentWithIdAlreadyExistsException;
 import com.murariwalake.springbootglobalexceptionhandling.model.Student;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +24,12 @@ public class StudentRestController {
 	@GetMapping("/{id}")
 	public ResponseEntity<Student> getStudent(@PathVariable int id) {
 		Student student = students.get(id);
-		return student != null ? ResponseEntity.ok(student) : ResponseEntity.notFound().build();
+
+		if (student == null) {
+			throw new StudentNotFoundException("Student with id " + id + " not found");
+		}
+
+		return ResponseEntity.ok(student);
 	}
 
 	@GetMapping()
@@ -33,7 +40,7 @@ public class StudentRestController {
 	@PostMapping()
 	public ResponseEntity<?> addStudent(@RequestBody Student student) {
 		if (students.containsKey(student.getId())) {
-			return ResponseEntity.status(409).build();
+			throw new StudentWithIdAlreadyExistsException("Student with id " + student.getId() + " already exists");
 		}
 		students.put(student.getId(), student);
 		return ResponseEntity.ok(student);
@@ -42,7 +49,7 @@ public class StudentRestController {
 	@PutMapping("/{id}")
 	public ResponseEntity<?> updateStudent(@PathVariable int id, @RequestBody Student student) {
 		if (!students.containsKey(id)) {
-			return ResponseEntity.notFound().build();
+			throw new StudentNotFoundException("Student with id " + id + " not found");
 		}
 		student.setId(id);
 		students.put(id, student);
@@ -52,7 +59,7 @@ public class StudentRestController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteStudent(@PathVariable int id) {
 		if (!students.containsKey(id)) {
-			return ResponseEntity.notFound().build();
+			throw new StudentNotFoundException("Student with id " + id + " not found");
 		}
 		students.remove(id);
 		return ResponseEntity.ok().build();
